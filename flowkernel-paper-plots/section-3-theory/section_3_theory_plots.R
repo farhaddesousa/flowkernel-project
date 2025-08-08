@@ -137,6 +137,7 @@ ex_data <- generate_smooth_gauss_mix_cross(
   times          = times,
   num_points     = num_points
 )
+
 plot_data_cross <- function(dat) {
   if (!("times" %in% names(dat))) {
     stop("dat must include a 'times' element.")
@@ -171,16 +172,59 @@ plot_data_cross(ex_data)
 
 library(ggplot2)
 
-p_raw <- plot_data_cross(ex_data) + labs(x = NULL, y = NULL)
+p_raw <- plot_data_cross(ex_data) + labs(y = NULL)
 
 ggsave(
-  "raw_crossing.png",   # overwrite or rename as needed
+  "raw_crossing_ex.png",   # overwrite or rename as needed
   plot   = p_raw,
   width  = 1026, height = 673,  # identical pixel size to the old file
   units  = "px",
   dpi    = 100,                 # bump to 600 for print-ready output
   bg     = "white"
 )
+
+
+
+### Bigger numbers on axis ###
+library(ggplot2)
+library(purrr)
+library(tibble)
+
+plot_data_cross <- function(dat,
+                            axis_text_size  = 18,   # << bigger tick numbers
+                            axis_title_size = 18) { # << bigger “Time” label
+  if (!("times" %in% names(dat))) {
+    stop("dat must include a 'times' element.")
+  }
+  
+  df <- map2_dfr(dat$y, dat$times,
+                 ~ tibble(V1 = as.vector(.x[, 1]), time = .y))
+  
+  ggplot(df, aes(time, V1)) +
+    geom_point(colour = "black", alpha = 0.3) +
+    scale_x_continuous(limits = c(-1, 1)) +
+    scale_y_continuous(limits = c(-1, 1)) +
+    labs(x = "Time", y = NULL) +             # << x-axis label
+    theme_minimal() +
+    theme(
+      axis.text  = element_text(size = axis_text_size),
+      axis.title = element_text(size = axis_title_size, face = "plain")
+    )
+}
+
+p_raw <- plot_data_cross(ex_data)
+
+ggsave(
+  "raw_crossing_theory.png",
+  plot   = p_raw,
+  width  = 1026, height = 673,  # keep identical pixel size
+  units  = "px",
+  dpi    = 100,                 # unchanged
+  bg     = "white"
+)
+
+
+### End bigger numbers ### 
 
 ######################################################################
 # 1) Data-generation function:
@@ -526,5 +570,38 @@ ggsave("abs_means_with_points.png",
        plot   = p_abs_comb,
        width  = 1026, height = 673,
        units  = "px", dpi = 100, bg = "white")
+
+
+### Bigger labels: 
+
+## ── tweak axis labels & font sizes ────────────────────────────────────────
+big_axis_text  <- 18   # tick labels
+big_axis_title <- 18   # “Time” label
+
+p_linear_comb <- p_linear_comb +             # reuse existing object
+  labs(x = "Time", y = NULL) +
+  theme(
+    axis.text  = element_text(size = big_axis_text),
+    axis.title = element_text(size = big_axis_title, face = "plain")
+  )
+
+p_abs_comb <- p_abs_comb +
+  labs(x = "Time", y = NULL) +
+  theme(
+    axis.text  = element_text(size = big_axis_text),
+    axis.title = element_text(size = big_axis_title, face = "plain")
+  )
+
+## ── save (dimensions & dpi unchanged) ─────────────────────────────────────
+ggsave("linear_means_with_points.png",
+       plot   = p_linear_comb,
+       width  = 1026, height = 673,
+       units  = "px", dpi = 100, bg = "white")
+
+ggsave("abs_means_with_points.png",
+       plot   = p_abs_comb,
+       width  = 1026, height = 673,
+       units  = "px", dpi = 100, bg = "white")
+
 
 
